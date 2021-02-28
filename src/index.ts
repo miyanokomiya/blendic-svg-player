@@ -50,13 +50,14 @@ export class Player {
 
     this.currentFrame = 0
     this.reversed = false
+    this.mount()
   }
 
   get endFrame(): number {
     return this.bakedData.matrixMapPerFrame.length
   }
 
-  mount() {
+  private mount() {
     if (!this.$el) return
 
     const $svg = renderNode({
@@ -75,7 +76,7 @@ export class Player {
     this.$svg = $svg
   }
 
-  render() {
+  private render() {
     if (!this.$el || !this.$svg) return
 
     this.$svg.innerHTML = ''
@@ -89,7 +90,7 @@ export class Player {
     appendChildren(this.$svg, Array.from($svg.children))
   }
 
-  tick(tickFrame: number) {
+  private tick(tickFrame: number) {
     if (this.reversed) {
       const val = this.currentFrame - tickFrame
       this.currentFrame = 0 < val ? val : this.endFrame - 1

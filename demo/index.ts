@@ -9,8 +9,6 @@ const player = new Player('target', {
   height: '100%',
 })
 
-player.mount()
-
 document.getElementById('dispose')?.addEventListener('click', async () => {
   player.dispose()
 })
