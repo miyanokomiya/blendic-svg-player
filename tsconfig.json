@@ -8,6 +8,7 @@
     "typeRoots": ["node_modules/@types"],
     "declaration": true,
     "lib": ["dom", "es2015"],
-    "noEmit": true
+    "noEmit": true,
+    "resolveJsonModule": true
   }
 }
