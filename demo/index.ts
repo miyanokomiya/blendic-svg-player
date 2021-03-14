@@ -18,6 +18,12 @@ document.getElementById('reverse')?.addEventListener('click', () => {
 document.getElementById('play')?.addEventListener('click', () => {
   player.play()
 })
+document.getElementById('reverse-once')?.addEventListener('click', () => {
+  player.reverse(true)
+})
+document.getElementById('play-once')?.addEventListener('click', () => {
+  player.play(true)
+})
 document.getElementById('pause')?.addEventListener('click', () => {
   player.pause()
 })
