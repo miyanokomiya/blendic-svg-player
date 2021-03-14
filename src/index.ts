@@ -46,6 +46,7 @@ export class Player {
   private animationLoop: ReturnType<typeof useAnimationLoop> | undefined
   private currentFrame: number
   private reversed: boolean
+  private oneshot: boolean
   private currentActionName?: string
 
   constructor(el: string | Element, props: Props) {
@@ -72,6 +73,7 @@ export class Player {
 
     this.currentFrame = 0
     this.reversed = false
+    this.oneshot = false
     this.mount()
   }
 
@@ -125,26 +127,48 @@ export class Player {
   private tick(tickFrame: number) {
     if (this.reversed) {
       const val = this.currentFrame - tickFrame
-      this.currentFrame = 0 < val ? val : this.endFrame - 1
+      if (0 < val) {
+        this.currentFrame = val
+      } else {
+        if (this.oneshot) {
+          this.currentFrame = 0
+          this.pause()
+        } else {
+          this.currentFrame = this.endFrame - 1
+        }
+      }
     } else {
       const val = this.currentFrame + tickFrame
-      this.currentFrame = val < this.endFrame ? val : 0
+      if (val < this.endFrame) {
+        this.currentFrame = val
+      } else {
+        if (this.oneshot) {
+          this.currentFrame = this.endFrame - 1
+          this.pause()
+        } else {
+          this.currentFrame = 0
+        }
+      }
     }
     this.render()
   }
 
-  reverse() {
+  reverse(oneshot = false) {
     if (this.animationLoop) {
       this.pause()
     }
     this.reversed = true
+    this.oneshot = oneshot
     this.animationLoop = useAnimationLoop((tickFrame) => this.tick(tickFrame))
     this.animationLoop.begin()
   }
 
-  play() {
-    if (this.animationLoop) return
+  play(oneshot = false) {
+    if (this.animationLoop) {
+      this.pause()
+    }
     this.reversed = false
+    this.oneshot = oneshot
     this.animationLoop = useAnimationLoop((tickFrame) => this.tick(tickFrame))
     this.animationLoop.begin()
   }
