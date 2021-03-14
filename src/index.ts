@@ -82,7 +82,7 @@ export class Player {
   }
 
   get endFrame(): number {
-    return this.currentAction?.attributesMapPerFrame.length ?? 0
+    return (this.currentAction?.attributesMapPerFrame.length ?? 1) - 1
   }
 
   private mount() {
@@ -134,7 +134,7 @@ export class Player {
           this.currentFrame = 0
           this.pause()
         } else {
-          this.currentFrame = this.endFrame - 1
+          this.currentFrame = this.endFrame
         }
       }
     } else {
@@ -143,7 +143,7 @@ export class Player {
         this.currentFrame = val
       } else {
         if (this.oneshot) {
-          this.currentFrame = this.endFrame - 1
+          this.currentFrame = this.endFrame
           this.pause()
         } else {
           this.currentFrame = 0
