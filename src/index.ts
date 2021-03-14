@@ -1,6 +1,8 @@
 import { useAnimationLoop } from './animationLoop'
 
-type AffineMatrix = [number, number, number, number, number, number]
+const COMPATIBLE_MAJOR_VERSION = 1
+
+type Attributes = { [key: string]: string | number } | null
 
 export interface ElementNode {
   id: string
@@ -9,12 +11,17 @@ export interface ElementNode {
   children: (ElementNode | string)[]
 }
 
-interface BakedData {
-  matrixMapPerFrame: { [id: string]: AffineMatrix }[]
-  svgTree: ElementNode
+interface Action {
+  name: string
+  attributesMapPerFrame: { [elementId: string]: { [name: string]: string } }[]
 }
 
-type Attributes = { [key: string]: string | number } | null
+interface BakedData {
+  version: string
+  appVersion: string
+  actions: Action[]
+  svgTree: ElementNode
+}
 
 interface Props {
   bakedData: BakedData
@@ -23,6 +30,11 @@ interface Props {
 }
 
 const SVG_URL = 'http://www.w3.org/2000/svg'
+
+function checkVersion(version: string): boolean {
+  const major = parseInt(version.split('.')[0])
+  return COMPATIBLE_MAJOR_VERSION === major
+}
 
 export class Player {
   private $el: Element | undefined
@@ -34,6 +46,7 @@ export class Player {
   private animationLoop: ReturnType<typeof useAnimationLoop> | undefined
   private currentFrame: number
   private reversed: boolean
+  private currentActionName?: string
 
   constructor(el: string | Element, props: Props) {
     if (typeof el === 'string') {
@@ -44,6 +57,15 @@ export class Player {
       this.$el = el
     }
     this.bakedData = props.bakedData
+    if (this.bakedData.actions.length > 0) {
+      this.currentActionName = this.bakedData.actions[0].name
+    }
+
+    if (!checkVersion(this.bakedData.version)) {
+      throw new Error(
+        `Version mismatch. Player Major: ${COMPATIBLE_MAJOR_VERSION}, Data: ${this.bakedData.version}`
+      )
+    }
 
     this.width = props.width ?? 0
     this.height = props.height ?? 0
@@ -53,8 +75,12 @@ export class Player {
     this.mount()
   }
 
+  get currentAction(): Action | undefined {
+    return this.bakedData.actions.find((a) => a.name === this.currentActionName)
+  }
+
   get endFrame(): number {
-    return this.bakedData.matrixMapPerFrame.length
+    return this.currentAction?.attributesMapPerFrame.length ?? 0
   }
 
   private mount() {
@@ -74,19 +100,25 @@ export class Player {
     })
     this.$el.append($svg)
     this.$svg = $svg
+    this.render()
   }
 
   private render() {
-    if (!this.$el || !this.$svg) return
+    if (!this.$el || !this.$svg || !this.currentAction) return
 
     this.$svg.innerHTML = ''
 
-    const posedSvgNode = applyMatrix(
-      this.bakedData.matrixMapPerFrame[this.currentFrame],
+    const posedSvgNode = applyTransform(
+      this.currentAction.attributesMapPerFrame[this.currentFrame],
       this.bakedData.svgTree
     )
 
     const $svg = renderNode(posedSvgNode)
+    Object.keys(posedSvgNode.attributs).forEach((name) => {
+      // drop original size attributs and use this class's size
+      if (['width', 'height'].includes(name)) return
+      setAttribute(this.$svg!, name, posedSvgNode.attributs[name])
+    })
     appendChildren(this.$svg, Array.from($svg.children))
   }
 
@@ -196,24 +228,19 @@ function appendChildren($el: Element, children: (Element | string)[]) {
   $el.appendChild($fragment)
 }
 
-function applyMatrix(
-  matrixMap: { [id: string]: AffineMatrix },
+function applyTransform(
+  attributsMap: { [elementId: string]: { [name: string]: string } },
   node: ElementNode
 ): ElementNode {
   return {
     ...node,
     attributs: {
       ...node.attributs,
-      transform: matrixToString(matrixMap[node.id]),
+      ...(attributsMap[node.id] ?? {}),
     },
     children: node.children.map((c) => {
       if (typeof c === 'string') return c
-      return applyMatrix(matrixMap, c)
+      return applyTransform(attributsMap, c)
     }),
   }
-}
-
-function matrixToString(matrix?: AffineMatrix): string {
-  if (!matrix) return ''
-  return `matrix(${matrix.join(',')})`
 }
