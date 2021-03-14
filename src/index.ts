@@ -7,7 +7,7 @@ type Attributes = { [key: string]: string | number } | null
 export interface ElementNode {
   id: string
   tag: string
-  attributs: { [name: string]: string }
+  attributes: { [name: string]: string }
   children: (ElementNode | string)[]
 }
 
@@ -90,14 +90,14 @@ export class Player {
 
     const $svg = renderNode({
       ...this.bakedData.svgTree,
-      attributs: {
-        ...this.bakedData.svgTree.attributs,
+      attributes: {
+        ...this.bakedData.svgTree.attributes,
         width: this.width
           ? this.width.toString()
-          : this.bakedData.svgTree.attributs.width,
+          : this.bakedData.svgTree.attributes.width,
         height: this.height
           ? this.height.toString()
-          : this.bakedData.svgTree.attributs.height,
+          : this.bakedData.svgTree.attributes.height,
       },
     })
     this.$el.append($svg)
@@ -116,10 +116,10 @@ export class Player {
     )
 
     const $svg = renderNode(posedSvgNode)
-    Object.keys(posedSvgNode.attributs).forEach((name) => {
-      // drop original size attributs and use this class's size
+    Object.keys(posedSvgNode.attributes).forEach((name) => {
+      // drop original size attributes and use this class's size
       if (['width', 'height'].includes(name)) return
-      setAttribute(this.$svg!, name, posedSvgNode.attributs[name])
+      setAttribute(this.$svg!, name, posedSvgNode.attributes[name])
     })
     appendChildren(this.$svg, Array.from($svg.children))
   }
@@ -202,7 +202,12 @@ export class Player {
 function renderNode(node: ElementNode): SVGElement {
   return createSVGElement(
     node.tag,
-    node.attributs,
+    {
+      ...node.attributes,
+      style:
+        (node.attributes.style ? node.attributes.style + ';' : '') +
+        getExtraStyle(node),
+    },
     node.children.map((n) => {
       if (typeof n === 'string') return n
       return renderNode(n)
@@ -217,6 +222,21 @@ export function createSVGElement(
 ): SVGElement {
   const $el = document.createElementNS(SVG_URL, tag)
   return createElement($el, attributes, children)
+}
+
+function getExtraStyle(node: ElementNode): string {
+  const ret: string[] = []
+
+  if (node.attributes.fill) {
+    ret.push(`fill:${node.attributes.fill}`)
+  }
+  if (node.attributes.stroke) {
+    ret.push(`stroke:${node.attributes.stroke}`)
+  }
+
+  return (
+    (node.attributes.style ? node.attributes.style + ';' : '') + ret.join(';')
+  )
 }
 
 function setAttribute($el: Element, name: string, value: string) {
@@ -253,18 +273,18 @@ function appendChildren($el: Element, children: (Element | string)[]) {
 }
 
 function applyTransform(
-  attributsMap: { [elementId: string]: { [name: string]: string } },
+  attributesMap: { [elementId: string]: { [name: string]: string } },
   node: ElementNode
 ): ElementNode {
   return {
     ...node,
-    attributs: {
-      ...node.attributs,
-      ...(attributsMap[node.id] ?? {}),
+    attributes: {
+      ...node.attributes,
+      ...(attributesMap[node.id] ?? {}),
     },
     children: node.children.map((c) => {
       if (typeof c === 'string') return c
-      return applyTransform(attributsMap, c)
+      return applyTransform(attributesMap, c)
     }),
   }
 }
