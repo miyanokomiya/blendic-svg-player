@@ -8,25 +8,31 @@
     />
     <title>demo</title>
     <style type="text/css">
-#target {
-  border: solid 1px #000;
-  width: 300px;
-  height: 200px;
-}
+      #target {
+        border: solid 1px #000;
+        width: 600px;
+        height: 400px;
+      }
     </style>
   </head>
   <body>
-    <button id="dispose">dispose</button>
-    <button id="reverse">reverse</button>
-    <button id="play">play</button>
-    <button id="reverse-once">reverse once</button>
-    <button id="play-once">play once</button>
-    <button id="pause">pause</button>
-    <button id="stop">stop</button>
+    <h3>Import baked data</h3>
+    <input id="file" type="file" accept=".json, application/json" />
+
     <h3>View</h3>
     <div id="target"></div>
-    <h3>Import baked data</h3>
-    <input id="file" type="file" accept=".json, application/json">
+
+    <div>
+      <select id="action-name"></select>
+      <button id="reverse">reverse</button>
+      <button id="play">play</button>
+      <button id="pause">pause</button>
+      <button id="stop">stop</button>
+      <button id="reverse-once">reverse once</button>
+      <button id="play-once">play once</button>
+      <button id="dispose">dispose</button>
+    </div>
+
     <script type="text/javascript" src="./index.ts"></script>
   </body>
 </html>
