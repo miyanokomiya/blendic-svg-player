@@ -47,7 +47,9 @@ export class Player {
   private currentFrame: number
   private reversed: boolean
   private oneshot: boolean
-  private currentActionName?: string
+  private currentActionName: string
+
+  private actionsByName: { [name: string]: Action }
 
   constructor(el: string | Element, props: Props) {
     if (typeof el === 'string') {
@@ -57,10 +59,15 @@ export class Player {
     } else {
       this.$el = el
     }
+
     this.bakedData = props.bakedData
-    if (this.bakedData.actions.length > 0) {
-      this.currentActionName = this.bakedData.actions[0].name
-    }
+    this.actionsByName = this.bakedData.actions.reduce<{
+      [name: string]: Action
+    }>((p, action) => {
+      p[action.name] = action
+      return p
+    }, {})
+    this.currentActionName = this.bakedData.actions[0]?.name ?? ''
 
     if (!checkVersion(this.bakedData.version)) {
       throw new Error(
@@ -77,11 +84,32 @@ export class Player {
     this.mount()
   }
 
-  get currentAction(): Action | undefined {
-    return this.bakedData.actions.find((a) => a.name === this.currentActionName)
+  getActionList(): { name: string; endFrame: number }[] {
+    return this.bakedData.actions.map((a) => ({
+      name: a.name,
+      endFrame: a.attributesMapPerFrame.length - 1,
+    }))
   }
 
-  get endFrame(): number {
+  getCurrentActionName(): string {
+    return this.currentActionName
+  }
+
+  setCurrentActionName(name: string) {
+    if (name in this.actionsByName) {
+      this.currentActionName = name
+      this.currentFrame = Math.min(this.currentFrame, this.endFrame)
+      this.render()
+    } else {
+      throw new Error('Not found the action.')
+    }
+  }
+
+  private get currentAction(): Action | undefined {
+    return this.actionsByName[this.currentActionName]
+  }
+
+  private get endFrame(): number {
     return (this.currentAction?.attributesMapPerFrame.length ?? 1) - 1
   }
 

@@ -8,6 +8,25 @@ let player = new Player('target', {
   width: '100%',
   height: '100%',
 })
+initActionNameSelect()
+
+function initActionNameSelect() {
+  if (!player) return
+
+  const select = document.getElementById('action-name')!
+  select.innerHTML = ''
+  const fragment = document.createDocumentFragment()
+  player.getActionList().forEach((a) => {
+    const option = document.createElement('option')
+    option.setAttribute('value', a.name)
+    if (a.name === player.getCurrentActionName()) {
+      option.setAttribute('selected', 'selected')
+    }
+    option.text = a.name
+    fragment.appendChild(option)
+  })
+  select.appendChild(fragment)
+}
 
 document.getElementById('dispose')?.addEventListener('click', () => {
   player.dispose()
@@ -30,6 +49,9 @@ document.getElementById('pause')?.addEventListener('click', () => {
 document.getElementById('stop')?.addEventListener('click', () => {
   player.stop()
 })
+document.getElementById('action-name')?.addEventListener('input', (e: any) => {
+  player.setCurrentActionName(e.target.value)
+})
 
 document.getElementById('file')?.addEventListener('input', (e) => {
   const target = e.target as any
@@ -48,6 +70,7 @@ document.getElementById('file')?.addEventListener('input', (e) => {
       width: '100%',
       height: '100%',
     })
+    initActionNameSelect()
   }
   reader.onerror = () => alert('Invalid data')
   reader.readAsText(file)
