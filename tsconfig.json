@@ -1,14 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "esnext",
-    "strict": true,
-    "esModuleInterop": true,
     "moduleResolution": "node",
+    "target": "esnext",
+    "module": "esnext",
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "allowJs": true,
+    "checkJs": true,
     "typeRoots": ["node_modules/@types"],
     "declaration": true,
     "lib": ["dom", "es2015"],
-    "noEmit": true,
-    "resolveJsonModule": true
-  }
+    "noEmit": true
+  },
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]
 }
