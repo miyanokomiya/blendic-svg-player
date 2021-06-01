@@ -34,3 +34,4 @@ export function useAnimationLoop(
     },
   }
 }
+export type AnimationLoop = ReturnType<typeof useAnimationLoop>
