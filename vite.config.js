@@ -3,13 +3,7 @@ import { defineConfig } from 'vite'
 import svelte from '@sveltejs/vite-plugin-svelte'
 
 export default defineConfig({
-  plugins: [
-    svelte({
-      compilerOptions: {
-        customElement: true,
-      },
-    }),
-  ],
+  plugins: [svelte()],
   build: {
     lib:
       process.env.LIB === '1'
