@@ -1,7 +1,5 @@
 <script lang="ts">
   import type { AnimationLoop } from './animationLoop'
-  import { Player } from './index'
-  import { onDestroy, onMount } from 'svelte'
 
   interface ElementNode {
     id: string
@@ -25,36 +23,44 @@
   }
 
   export let bakedData: BakedData
-  export let width: number | string = 0
-  export let height: number | string = 0
+  export let width: number | string = '200px'
+  export let height: number | string = '200px'
+  export let currentActionName = ''
 
-  // let animationLoop: AnimationLoop | undefined
-  // let currentFrame = 0
-  // let reversed = false
-  // let oneshot = false
-  // let currentActionName = ''
-  // let actionsByName: { [name: string]: Action } = {}
+  let animationLoop: AnimationLoop | undefined
+  let currentFrame = 0
+  let reversed = false
+  let oneshot = false
 
-  let target: HTMLElement
-  let player: Player
+  $: actionsByName =
+    bakedData?.actions.reduce<{
+      [name: string]: Action
+    }>((p, action) => {
+      p[action.name] = action
+      return p
+    }, {}) ?? {}
 
-  onMount(async () => {
-    player?.dispose()
-    player = new Player(target, {
-      bakedData: bakedData as any,
-      width,
-      height,
-    })
-  })
+  $: {
+    if (!bakedData) break $
+    if (bakedData.actions.length === 0) {
+      console.error('Error: Not found actions.')
+      break $
+    }
 
-  onDestroy(() => {
-    player?.dispose()
-  })
+    currentActionName = bakedData.actions[0].name
+  }
+
+  $: currentAction = actionsByName[currentActionName]
+
+  $: svgTree = bakedData.svgTree
 </script>
 
-<main>
-  <p>{width}</p>
-  <p>{bakedData}</p>
-  <div bind:this={target} />
-  <div id="tmp" />
-</main>
+{#if bakedData}
+  <div>
+    <p>{width} {height}</p>
+    <p>{bakedData}</p>
+    <p>{currentActionName}</p>
+    <p>{svgTree.tag}</p>
+    <!-- <svelte:component tag={svgTree.tag} {...svgTree.attributes} /> -->
+  </div>
+{/if}
