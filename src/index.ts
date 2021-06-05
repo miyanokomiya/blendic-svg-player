@@ -1,35 +1,15 @@
 import { useAnimationLoop } from './animationLoop'
+import { createSVGElement, setAttribute, appendChildren } from './elements'
+
+import type { ElementNode, Action, BakedData } from './types'
 
 const COMPATIBLE_MAJOR_VERSION = 1
-
-type Attributes = { [key: string]: string | number } | null
-
-export interface ElementNode {
-  id: string
-  tag: string
-  attributes: { [name: string]: string }
-  children: (ElementNode | string)[]
-}
-
-interface Action {
-  name: string
-  attributesMapPerFrame: { [elementId: string]: { [name: string]: string } }[]
-}
-
-interface BakedData {
-  version: string
-  appVersion: string
-  actions: Action[]
-  svgTree: ElementNode
-}
 
 interface Props {
   bakedData: BakedData
   width?: number | string
   height?: number | string
 }
-
-const SVG_URL = 'http://www.w3.org/2000/svg'
 
 function checkVersion(version: string): boolean {
   const major = parseInt(version.split('.')[0])
@@ -52,7 +32,7 @@ export class Player {
   private actionsByName: { [name: string]: Action }
 
   constructor(el: string | Element, props: Props) {
-    if (typeof el === 'string') {
+    if (isString(el)) {
       const $el = document.getElementById(el)
       if (!$el) throw new Error('Not found element: ' + el)
       this.$el = $el
@@ -154,31 +134,39 @@ export class Player {
 
   private tick(tickFrame: number) {
     if (this.reversed) {
-      const val = this.currentFrame - tickFrame
-      if (0 < val) {
-        this.currentFrame = val
-      } else {
-        if (this.oneshot) {
-          this.currentFrame = 0
-          this.pause()
-        } else {
-          this.currentFrame = this.endFrame
-        }
-      }
+      this.tickReverse(tickFrame)
     } else {
-      const val = this.currentFrame + tickFrame
-      if (val < this.endFrame) {
-        this.currentFrame = val
-      } else {
-        if (this.oneshot) {
-          this.currentFrame = this.endFrame
-          this.pause()
-        } else {
-          this.currentFrame = 0
-        }
-      }
+      this.tickForward(tickFrame)
     }
     this.render()
+  }
+
+  private tickReverse(tickFrame: number) {
+    const val = this.currentFrame - tickFrame
+    if (0 < val) {
+      this.currentFrame = val
+    } else {
+      if (this.oneshot) {
+        this.currentFrame = 0
+        this.pause()
+      } else {
+        this.currentFrame = this.endFrame
+      }
+    }
+  }
+
+  private tickForward(tickFrame: number) {
+    const val = this.currentFrame + tickFrame
+    if (val < this.endFrame) {
+      this.currentFrame = val
+    } else {
+      if (this.oneshot) {
+        this.currentFrame = this.endFrame
+        this.pause()
+      } else {
+        this.currentFrame = 0
+      }
+    }
   }
 
   reverse(oneshot = false) {
@@ -237,19 +225,10 @@ function renderNode(node: ElementNode): SVGElement {
         getExtraStyle(node),
     },
     node.children.map((n) => {
-      if (typeof n === 'string') return n
+      if (isString(n)) return n
       return renderNode(n)
     })
   )
-}
-
-export function createSVGElement(
-  tag: string,
-  attributes: Attributes = null,
-  children: (Element | string)[] = []
-): SVGElement {
-  const $el = document.createElementNS(SVG_URL, tag)
-  return createElement($el, attributes, children)
 }
 
 function getExtraStyle(node: ElementNode): string {
@@ -267,39 +246,6 @@ function getExtraStyle(node: ElementNode): string {
   )
 }
 
-function setAttribute($el: Element, name: string, value: string) {
-  return $el.setAttribute(name, value)
-}
-
-function createElement<T extends Element>(
-  $el: T,
-  attributes: Attributes = null,
-  children: (Element | string)[] = []
-): T {
-  for (const key in attributes) {
-    setAttribute($el, key, attributes[key].toString())
-  }
-  if (Array.isArray(children)) {
-    appendChildren($el, children)
-  } else {
-    $el.textContent = children
-  }
-  return $el
-}
-
-function appendChildren($el: Element, children: (Element | string)[]) {
-  const $fragment = document.createDocumentFragment()
-  for (let i = 0; i < children.length; i++) {
-    const item = children[i]
-    if (typeof item === 'string') {
-      $fragment.appendChild(new Text(item))
-    } else {
-      $fragment.appendChild(item)
-    }
-  }
-  $el.appendChild($fragment)
-}
-
 function applyTransform(
   attributesMap: { [elementId: string]: { [name: string]: string } },
   node: ElementNode
@@ -311,8 +257,12 @@ function applyTransform(
       ...(attributesMap[node.id] ?? {}),
     },
     children: node.children.map((c) => {
-      if (typeof c === 'string') return c
+      if (isString(c)) return c
       return applyTransform(attributesMap, c)
     }),
   }
+}
+
+function isString(val: unknown): val is string {
+  return typeof val === 'string'
 }
