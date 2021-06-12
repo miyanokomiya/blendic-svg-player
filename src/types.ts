@@ -1,4 +1,4 @@
-export type Attributes = { [key: string]: string | number } | null
+export type Attributes = { [key: string]: string | number | undefined } | null
 
 export interface ElementNode {
   id: string

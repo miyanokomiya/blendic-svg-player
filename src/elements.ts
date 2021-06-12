@@ -11,8 +11,17 @@ export function createSVGElement(
   return createElement($el, attributes, children)
 }
 
+export function createHTMLElement(
+  tag: string,
+  attributes: Attributes = null,
+  children: (Element | string)[] = []
+): HTMLElement {
+  const $el = document.createElement(tag)
+  return createElement($el, attributes, children)
+}
+
 export function setAttribute($el: Element, name: string, value: string) {
-  return $el.setAttribute(name, value)
+  $el.setAttribute(name, value)
 }
 
 export function createElement<T extends Element>(
@@ -21,7 +30,9 @@ export function createElement<T extends Element>(
   children: (Element | string)[] = []
 ): T {
   for (const key in attributes) {
-    setAttribute($el, key, attributes[key].toString())
+    if (attributes[key] !== undefined) {
+      setAttribute($el, key, attributes[key]!.toString())
+    }
   }
   if (Array.isArray(children)) {
     appendChildren($el, children)
