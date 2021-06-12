@@ -1,5 +1,10 @@
 import { useAnimationLoop } from './animationLoop'
-import { createSVGElement, setAttribute, appendChildren } from './elements'
+import {
+  createHTMLElement,
+  createSVGElement,
+  setAttribute,
+  appendChildren,
+} from './elements'
 
 import type { ElementNode, Action, BakedData } from './types'
 
@@ -109,7 +114,7 @@ export class Player {
       },
     })
     this.$el.append($svg)
-    this.$svg = $svg
+    this.$svg = $svg as SVGElement
     this.render()
   }
 
@@ -215,18 +220,18 @@ export class Player {
   }
 }
 
-function renderNode(node: ElementNode): SVGElement {
-  return createSVGElement(
+function renderNode(node: ElementNode, html = false): SVGElement | HTMLElement {
+  return (html ? createHTMLElement : createSVGElement)(
     node.tag,
     {
       ...node.attributes,
       style:
         (node.attributes.style ? node.attributes.style + ';' : '') +
-        getExtraStyle(node),
+          getExtraStyle(node) || undefined,
     },
     node.children.map((n) => {
       if (isString(n)) return n
-      return renderNode(n)
+      return renderNode(n, html || node.tag === 'foreignObject')
     })
   )
 }
